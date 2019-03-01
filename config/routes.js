@@ -1,7 +1,7 @@
 const axios = require('axios');
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const db = require('../database/dbHelpers.js')
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../database/dbHelpers');
 
 const { authenticate, generateToken } = require('../auth/authenticate');
 
@@ -12,8 +12,8 @@ module.exports = server => {
 };
 
 function register(req, res) {
-  const creds = req.body;
-  creds.password = bcrypt.hashSync(creds.password, 10);
+  const credentials = req.body;
+  credentials.password = bcrypt.hashSync(credentials.password, 10);
   db.insertUser(user)
     .then(user => {
       res.status(201).json({ message: 'You are now registered!' })
@@ -24,7 +24,21 @@ function register(req, res) {
 }
 
 function login(req, res) {
-  // implement user login
+  const credentials = req.body;
+
+  db.userLogin(credentials.username)
+    .then(user => {
+      if (user && bcrypt.compareSync(credentials.password, user.password)) {
+        const token = generateToken(user);
+        console.log('users token', token)
+        res.status(200).json({ message: 'You are logged in!', token })
+      } else {
+        res.status(404).json({ message: 'Incorrect username or password' })
+      }
+    })
+    .catch(err => {
+      res.status(500).json(err);
+    })
 }
 
 function getJokes(req, res) {
